@@ -404,7 +404,7 @@ d13_sim = ct.jaccard_analysis(d13_filt, id='d13')
 
 
 ### Clone Calling
-Cells with a given threshold for similarity (here 0.7) will be get the same clone index. Celones with one cell will be disregarded.
+Cells with a given threshold for similarity (here 0.7) will be get the same clone index. Clones with one cell will be disregarded.
 
 
 ```python
