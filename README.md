@@ -542,11 +542,21 @@ celltag_data
 
 
 ### Create Linklist of Relation between Cells and CellTags
+- CellTagV1 Clones: 166 (1402 Cells)
+- CellTagV2 Clones: 197 (1174 Cells)
+- CellTagV3 Clones: 50 (100 Cells)
+- Cells in 1 Clone: 1268
+- Cells in 2 Clones: 659 (1318 Nodes)
+- Cells in 3 Clones: 30 (90 Nodes)
+- Unique Cells: 1957
+- **Nodes Count: 3089** -> 413 Clones + 2676 Cells -> (166+197+50) + (1268+1318+90)
+
+(1268 + 1318 + 90) = (1402 + 1174 + 100) = 2676
 
 
 ```python
 link_list = ct.convert_cell_tag_matrix_to_link_list(celltag_data)
-nodes = ct.get_nodes_from_link_list(link_list)
+all_nodes = ct.get_nodes_from_link_list(link_list)
 ```
 
     Preprocessing data..
@@ -561,105 +571,220 @@ nodes = ct.get_nodes_from_link_list(link_list)
 
 
 ```python
-link_list
+ref_nodes = ["CellTagV1_95"]
+sub_links, sub_nodes = ct.get_subnet(ref_nodes, link_list, all_nodes)
+print("Links:", sub_links.shape[0], "\nNodes:",sub_nodes.shape[0])
+```
+
+    Links: 25 
+    Nodes: 15
+
+
+
+```python
+G = nx.Graph()
+G.add_nodes_from(sub_nodes['nodes'])
+edges = [(row['source'], row['target']) for index, row in sub_links.iterrows()]
+G.add_edges_from(edges)
+
+# Define the layout of the graph
+layout = go.Layout(
+    title="Network",
+    showlegend=False,
+    hovermode='closest',
+    width=800,
+    height=600
+)
+
+plotly_graph = nx.spring_layout(G)  
+
+# Create node positions
+node_x = []
+node_y = []
+for node in plotly_graph:
+    x, y = plotly_graph[node]
+    node_x.append(x)
+    node_y.append(y)
+
+color_mapping = {
+    'cell': 'red',
+    'clone': 'blue',
+}
+node_colors = [color_mapping.get(category, 'gray') for category in sub_nodes['type']]
+
+node_trace = go.Scatter(
+    x=node_x,
+    y=node_y,
+    mode='markers+text',  # Add 'text' mode to display labels
+    #"hoverinfo='text',
+    text=sub_nodes['nodes'],  # Set the labels to node names
+    textposition='bottom center',  # Adjust the label position
+    marker=dict(
+        showscale=False,
+        color=node_colors,
+        size=10
+    )
+)
+
+edge_x = []
+edge_y = []
+for edge in G.edges():
+    x0, y0 = plotly_graph[edge[0]]
+    x1, y1 = plotly_graph[edge[1]]
+    edge_x.append(x0)
+    edge_x.append(x1)
+    edge_x.append(None)
+    edge_y.append(y0)
+    edge_y.append(y1)
+    edge_y.append(None)
+
+edge_trace = go.Scatter(
+    x=edge_x,
+    y=edge_y,
+    line=dict(width=0.5, color='#888'),
+    hoverinfo='none',
+    mode='lines'
+)
+
+fig = go.Figure(data=[edge_trace, node_trace], layout=layout)
+
+iplot(fig)
+```
+
+
+<div>                            <div id="c838f629-596e-40c7-8edd-24698cece92c" class="plotly-graph-div" style="height:600px; width:800px;"></div>            <script type="text/javascript">                require(["plotly"], function(Plotly) {                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("c838f629-596e-40c7-8edd-24698cece92c")) {                    Plotly.newPlot(                        "c838f629-596e-40c7-8edd-24698cece92c",                        [{"hoverinfo":"none","line":{"color":"#888","width":0.5},"mode":"lines","x":[0.09321163696583713,0.0926191676389283,null,0.2584437430596077,0.0926191676389283,null,-0.09318372261472853,0.0926191676389283,null,-0.1787929718453414,0.0926191676389283,null,0.45462745516849656,0.0926191676389283,null,0.3741666434966264,0.0926191676389283,null,0.423929772012322,0.0926191676389283,null,0.29429248396269336,0.0926191676389283,null,-0.007015646491360902,0.0926191676389283,null,0.1964132867843469,0.0926191676389283,null,0.01662451923388329,0.0926191676389283,null,-0.17287047362115618,0.0926191676389283,null,-0.646728773502388,-1.0,null,-0.646728773502388,-0.860780907271751,null,-0.646728773502388,-0.9611186291800916,null,-0.646728773502388,-0.7476951303143334,null,-0.646728773502388,-0.8207710975427938,null,-0.646728773502388,0.0926191676389283,null,-0.646728773502388,-0.9982347672912837,null,0.5644949379757486,0.480020988225612,null,0.5644949379757486,0.896570315384758,null,0.5644949379757486,0.6515249508887048,null,0.5644949379757486,0.8960244266707574,null,0.5644949379757486,0.7942277922069045,null,0.5644949379757486,0.0926191676389283,null],"y":[0.15065775649522983,-0.15672078388231322,null,-0.3495075967625502,-0.15672078388231322,null,0.08119076913388411,-0.15672078388231322,null,-0.1499880078133015,-0.15672078388231322,null,-0.2874049980761336,-0.15672078388231322,null,-0.4662213872212358,-0.15672078388231322,null,-0.11482433670348534,-0.15672078388231322,null,0.040965968446403926,-0.15672078388231322,null,-0.3934538385088683,-0.15672078388231322,null,-0.5434733105993319,-0.15672078388231322,null,-0.5537612702699515,-0.15672078388231322,null,-0.4038367396026915,-0.15672078388231322,null,-0.05702350750214658,0.09851604842706728,null,-0.05702350750214658,0.1543149627109535,null,-0.05702350750214658,-0.23250230389938603,null,-0.05702350750214658,0.2656552374383664,null,-0.05702350750214658,-0.3352148703337683,null,-0.05702350750214658,-0.15672078388231322,null,-0.05702350750214658,-0.0738506545698931,null,0.38601137101231014,0.6988853942271266,null,0.38601137101231014,0.5180025639893666,null,0.38601137101231014,0.7340167677203039,null,0.38601137101231014,0.33887246674759214,null,0.38601137101231014,0.650694299396453,null,0.38601137101231014,-0.15672078388231322,null],"type":"scatter"},{"marker":{"color":["red","red","red","red","red","red","red","red","red","red","red","red","blue","blue","blue"],"showscale":false,"size":10},"mode":"markers+text","text":["CCGTTCAGTTTGTTTC-1_V1","CTCCTAGTCATATCGG-1_V1","CGGACACCACCGAATT-1_V1","CTACACCGTAGGGACT-1_V1","CGTAGGCAGCGATAGC-1_V1","GAAACTCTCAATACCG-1_V1","GCATGATGTACCCAAT-1_V1","TTGCCGTAGTACACCT-1_V1","ATCGAGTTCCCTAATT-1_V1","CGACCTTTCTACCTGC-1_V1","TTGAACGCATCAGTAC-1_V1","TAGACCACAATGACCT-1_V1","CellTagV2_147","CellTagV2_109","CellTagV1_95"],"textposition":"bottom center","x":[0.09321163696583713,0.2584437430596077,-0.09318372261472853,-0.1787929718453414,0.45462745516849656,0.3741666434966264,0.423929772012322,0.29429248396269336,-0.007015646491360902,0.1964132867843469,0.01662451923388329,-0.17287047362115618,-0.646728773502388,0.5644949379757486,0.0926191676389283,-1.0,0.480020988225612,0.896570315384758,-0.860780907271751,0.6515249508887048,0.8960244266707574,0.7942277922069045,-0.9611186291800916,-0.7476951303143334,-0.8207710975427938,-0.9982347672912837],"y":[0.15065775649522983,-0.3495075967625502,0.08119076913388411,-0.1499880078133015,-0.2874049980761336,-0.4662213872212358,-0.11482433670348534,0.040965968446403926,-0.3934538385088683,-0.5434733105993319,-0.5537612702699515,-0.4038367396026915,-0.05702350750214658,0.38601137101231014,-0.15672078388231322,0.09851604842706728,0.6988853942271266,0.5180025639893666,0.1543149627109535,0.7340167677203039,0.33887246674759214,0.650694299396453,-0.23250230389938603,0.2656552374383664,-0.3352148703337683,-0.0738506545698931],"type":"scatter"}],                        {"height":600,"hovermode":"closest","showlegend":false,"template":{"data":{"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmapgl":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmapgl"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"#E5ECF6","showlakes":true,"showland":true,"subunitcolor":"white"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"bgcolor":"#E5ECF6","radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","gridwidth":2,"linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white"},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","gridwidth":2,"linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white"},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","gridwidth":2,"linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"bgcolor":"#E5ECF6","caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","zerolinewidth":2}}},"title":{"text":"Network"},"width":800},                        {"responsive": true}                    ).then(function(){
+
+var gd = document.getElementById('c838f629-596e-40c7-8edd-24698cece92c');
+var x = new MutationObserver(function (mutations, observer) {{
+        var display = window.getComputedStyle(gd).display;
+        if (!display || display === 'none') {{
+            console.log([gd, 'removed!']);
+            Plotly.purge(gd);
+            observer.disconnect();
+        }}
+}});
+
+// Listen for the removal of the full notebook cells
+var notebookContainer = gd.closest('#notebook-container');
+if (notebookContainer) {{
+    x.observe(notebookContainer, {childList: true});
+}}
+
+// Listen for the clearing of the current output cell
+var outputEl = gd.closest('.output');
+if (outputEl) {{
+    x.observe(outputEl, {childList: true});
+}}
+
+                        })                };                });            </script>        </div>
+
+
+
+```python
+celltag_data[celltag_data['CellTagV1']==95]
 ```
 
 
 
-<div>
 
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>source</th>
-      <th>target</th>
-      <th>tag</th>
-      <th>target_unmodified</th>
+      <th>CellTagV1</th>
+      <th>CellTagV2</th>
+      <th>CellTagV3</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <th>0</th>
-      <td>CellTagV3_30</td>
-      <td>GCGGGTTTCATGCTCC-1_V3</td>
-      <td>CellTagV3</td>
-      <td>GCGGGTTTCATGCTCC-1</td>
+      <th>CCGTTCAGTTTGTTTC-1</th>
+      <td>95</td>
+      <td>147</td>
+      <td>26</td>
     </tr>
     <tr>
-      <th>1</th>
-      <td>CellTagV3_46</td>
-      <td>GGTGAAGCAGTCACTA-1_V3</td>
-      <td>CellTagV3</td>
-      <td>GGTGAAGCAGTCACTA-1</td>
+      <th>CTCCTAGTCATATCGG-1</th>
+      <td>95</td>
+      <td>e</td>
+      <td>e</td>
     </tr>
     <tr>
-      <th>2</th>
-      <td>CellTagV3_12</td>
-      <td>ATCATCTCAATGGAGC-1_V3</td>
-      <td>CellTagV3</td>
-      <td>ATCATCTCAATGGAGC-1</td>
+      <th>CGGACACCACCGAATT-1</th>
+      <td>95</td>
+      <td>109</td>
+      <td>e</td>
     </tr>
     <tr>
-      <th>3</th>
-      <td>CellTagV3_3</td>
-      <td>AGGCCACAGCGGCTTC-1_V3</td>
-      <td>CellTagV3</td>
-      <td>AGGCCACAGCGGCTTC-1</td>
+      <th>CTACACCGTAGGGACT-1</th>
+      <td>95</td>
+      <td>109</td>
+      <td>e</td>
     </tr>
     <tr>
-      <th>4</th>
-      <td>CellTagV3_30</td>
-      <td>CGAGCACAGCACCGTC-1_V3</td>
-      <td>CellTagV3</td>
-      <td>CGAGCACAGCACCGTC-1</td>
+      <th>CGTAGGCAGCGATAGC-1</th>
+      <td>95</td>
+      <td>147</td>
+      <td>e</td>
     </tr>
     <tr>
-      <th>...</th>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
+      <th>GAAACTCTCAATACCG-1</th>
+      <td>95</td>
+      <td>109</td>
+      <td>e</td>
     </tr>
     <tr>
-      <th>2802</th>
-      <td>CellTagV2_176</td>
-      <td>CellTagV3_39</td>
-      <td>CellTagV2</td>
-      <td>CellTagV3_39</td>
+      <th>GCATGATGTACCCAAT-1</th>
+      <td>95</td>
+      <td>e</td>
+      <td>e</td>
     </tr>
     <tr>
-      <th>2803</th>
-      <td>CellTagV2_17</td>
-      <td>CellTagV3_2</td>
-      <td>CellTagV2</td>
-      <td>CellTagV3_2</td>
+      <th>TTGCCGTAGTACACCT-1</th>
+      <td>95</td>
+      <td>109</td>
+      <td>e</td>
     </tr>
     <tr>
-      <th>2804</th>
-      <td>CellTagV2_100</td>
-      <td>CellTagV3_14</td>
-      <td>CellTagV2</td>
-      <td>CellTagV3_14</td>
+      <th>ATCGAGTTCCCTAATT-1</th>
+      <td>95</td>
+      <td>109</td>
+      <td>e</td>
     </tr>
     <tr>
-      <th>2805</th>
-      <td>CellTagV2_114</td>
-      <td>CellTagV3_17</td>
-      <td>CellTagV2</td>
-      <td>CellTagV3_17</td>
+      <th>CGACCTTTCTACCTGC-1</th>
+      <td>95</td>
+      <td>147</td>
+      <td>26</td>
     </tr>
     <tr>
-      <th>2806</th>
-      <td>CellTagV2_148</td>
-      <td>CellTagV3_28</td>
-      <td>CellTagV2</td>
-      <td>CellTagV3_28</td>
+      <th>TTGAACGCATCAGTAC-1</th>
+      <td>95</td>
+      <td>147</td>
+      <td>e</td>
+    </tr>
+    <tr>
+      <th>TAGACCACAATGACCT-1</th>
+      <td>95</td>
+      <td>147</td>
+      <td>e</td>
     </tr>
   </tbody>
 </table>
-<p>2807 rows × 4 columns</p>
 </div>
-
 
 

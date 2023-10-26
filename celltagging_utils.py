@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from random import sample
 import re
+from pyvis.network import Network
+import datetime
 #********************************************************************************
 def single_cell_data_binarization(celltag_dat, tag_cutoff):
     
@@ -183,28 +185,41 @@ def convert_cell_tag_matrix_to_link_list(celltag_data):
     print("finished")
     return linkList
 #********************************************************************************
-def get_nodes_from_link_list(linkList):
-    nodes = pd.unique(linkList[['target', 'source']].values.ravel('K'))
-    Nodes = pd.DataFrame(nodes, columns=['nodes'])
+def get_nodes_from_link_list(link_list):  
+    nodes = pd.unique(link_list[['target', 'source']].values.ravel('K'))
+    nodes = pd.DataFrame(nodes, columns=['nodes'])
     
-    def refer_tag_id(each_node):
-        cells_or_not = sum(tag in each_node for tag in ["CellTagV1", "CellTagV2", "CellTagV3"]) == 0
-        if cells_or_not:
-            return linkList.loc[linkList['target'] == each_node, 'tag'].values[0]
+    def get_type(each_node):
+        is_cell = sum(tag in each_node['nodes'] for tag in ["CellTagV1", "CellTagV2", "CellTagV3"]) == 0
+        if is_cell:
+            return "cell"
         else:
-            return each_node.split("_")[0]
+            return "clone"
+    
+    def get_tag_id(each_node):
+        if each_node['type']=="cell":
+            return link_list.loc[link_list['target'] == each_node['nodes'], 'tag'].values[0]
+        else:
+            return each_node['nodes'].split("_")[0]
         
-    def refer_unmodified_name(each_node):
-        cells_or_not = sum(tag in each_node for tag in ["CellTagV1", "CellTagV2", "CellTagV3"]) == 0
-        if cells_or_not:
-            return linkList.loc[linkList['target'] == each_node, 'target_unmodified'].values[0]
+    def get_unmodified_name(each_node):
+        if each_node['type']=="cell":
+            return link_list.loc[link_list['target'] == each_node['nodes'], 'target_unmodified'].values[0]
         else:
-            return each_node
+            return each_node['nodes']
+        
+    def get_clone_no(each_node):
+        if each_node['type']=="cell":
+            return link_list.loc[link_list['target'] == each_node['nodes'], 'source'].values[0]
+        else:
+            return each_node['nodes']
     
-    Nodes['tag'] = Nodes['nodes'].apply(refer_tag_id)
-    Nodes['node_name_unmodified'] = Nodes['nodes'].apply(refer_unmodified_name)
+    nodes['type'] = nodes.apply(get_type, axis=1)
+    nodes['tag'] = nodes.apply(get_tag_id, axis=1)
+    nodes['node_name_unmodified'] = nodes.apply(get_unmodified_name, axis=1)
+    nodes['clone'] = nodes.apply(get_clone_no, axis=1)
     
-    return Nodes
+    return nodes
 #********************************************************************************
 def add_data_to_nodes(Nodes, additional_data):
     return pd.merge(Nodes, additional_data, left_on='node_name_unmodified', right_index=True, how='left')
@@ -216,47 +231,14 @@ def return_directly_connected_nodes(node, link_list):
     
     tmp_nodes = set(tmp_link['target']).union(set(tmp_link2['source'])).union(set(node))
     return list(tmp_nodes)
+
 #********************************************************************************
-def return_all_connected_nodes(node, link_list):
-    for _ in range(5):
-        node = return_directly_connected_nodes(node, link_list)
-    return node
+
 #********************************************************************************
-def draw_network_graph(link_list, nodes, overlay):
-    G = nx.Graph()
-    node_mapping = {}
+def get_subnet(ref_nodes, link_list, nodes):
+    connected_nods = return_directly_connected_nodes(ref_nodes, link_list)
+    sub_link = link_list[link_list['source'].isin(connected_nods) | link_list['target'].isin(connected_nods)]
+    sub_nodes = nodes[nodes['nodes'].isin(connected_nods)]
     
-    for i, node in enumerate(nodes['nodes']):
-        G.add_node(i, nodes=node, cluster=nodes.iloc[i]['Cluster'])
-        node_mapping[node] = i
+    return sub_link, sub_nodes
     
-    for _, link in link_list.iterrows():
-        G.add_edge(node_mapping[link['source']], node_mapping[link['target']], weight=1)
-    
-    pos = nx.spring_layout(G) 
-    
-    edge_weights = [G[u][v]['weight'] for u, v in G.edges]
-    
-    node_colors = [nodes.iloc[i]['Cluster'] for i in range(len(nodes))]
-    node_sizes = [100 for _ in range(len(nodes))]  # Change size as needed
-    
-    plt.figure(figsize=(12, 8))
-    nx.draw(G, pos, node_color=node_colors, node_size=node_sizes, with_labels=True,
-            font_size=8, font_color='black', font_weight='bold', alpha=0.8, edge_color='gray', width=edge_weights)
-    
-    plt.title("Network Graph")
-    plt.axis('off')
-    
-    if overlay == "Cluster":
-        legend_labels = nodes['Cluster'].unique()
-        plt.legend(handles=[plt.Line2D([0], [0], marker='o', color='w', label=label, 
-                                        markerfacecolor='C'+str(i), markersize=10) for i, label in enumerate(legend_labels)])
-    
-    plt.show()
-#********************************************************************************
-def draw_subnet(tag, overlay, link_list, nodes):
-    no = return_all_connected_nodes(tag, link_list)
-    sub_link = link_list[link_list['source'].isin(no) | link_list['target'].isin(no)]
-    sub_nodes = nodes[nodes['nodes'].isin(no)]
-    
-    draw_network_graph(sub_link, sub_nodes, overlay)
