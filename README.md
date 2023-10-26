@@ -628,12 +628,11 @@ fig = go.Figure(data=[edge_trace, node_trace], layout=layout)
 
 iplot(fig)
 ```
-
+![CellTagV1 Clone 95 Subnet Network](./scripts/clones.png)
         
 ```python
 celltag_data[celltag_data['CellTagV1']==95]
 ```
-![CellTagV1 Clone 95 Subnet Network](./scripts/clones.png)
 
 <div>
 
