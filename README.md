@@ -63,21 +63,12 @@ d3.set_index('Cell.BC',inplace=True)
 d13.set_index('Cell.BC',inplace=True)
 
 mef.shape, d3.shape, d13.shape
+# ((3812, 6319), (3812, 8246), (3812, 4630))
 ```
-
-
-
-
-    ((3812, 6319), (3812, 8246), (3812, 4630))
-
-
-
 
 ```python
 mef.head()
 ```
-
-
 
 
 <div>
@@ -365,9 +356,8 @@ mef_filt = ct.single_cell_data_whitelist(mef_bin, "./whitelist/V1.CellTag.Whitel
 d3_filt = ct.single_cell_data_whitelist(d3_bin, "./whitelist/V2.CellTag.Whitelist.csv")
 d13_filt = ct.single_cell_data_whitelist(d13_bin, "./whitelist/V3.CellTag.Whitelist.csv")
 print(mef_filt.shape, d3_filt.shape, d13_filt.shape)
+# (3812, 3256) (3812, 2537) (3812, 1981)
 ```
-
-    (3812, 3256) (3812, 2537) (3812, 1981)
 
 
 ### Filter Cells
@@ -383,9 +373,8 @@ mef_filt = ct.metric_based_filtering(mef_filt, 2, "greater")
 d3_filt = ct.metric_based_filtering(d3_filt, 2, "greater")
 d13_filt = ct.metric_based_filtering(d13_filt, 2, "greater")
 print(mef_filt.shape, d3_filt.shape, d13_filt.shape)
+# (1852, 3256) (1733, 2537) (717, 1981)
 ```
-
-    (1852, 3256) (1733, 2537) (717, 1981)
 
 
 ### Jaccard Analysis (Cell-Cell)
@@ -398,10 +387,6 @@ d3_sim = ct.jaccard_analysis(d3_filt, id='d3')
 d13_sim = ct.jaccard_analysis(d13_filt, id='d13')
 ```
 
-    Calculating Jaccard Similarities:   0%|          | 0/1852 [00:00<?, ?it/s]
-    Calculating Jaccard Similarities:   0%|          | 0/1733 [00:00<?, ?it/s]
-    Calculating Jaccard Similarities:   0%|          | 0/717 [00:00<?, ?it/s]
-
 
 ### Clone Calling
 Cells with a given threshold for similarity (here 0.7) will be get the same clone index. Clones with one cell will be disregarded.
@@ -413,21 +398,20 @@ d3_clones, d3_clone_size = ct.clone_calling(d3_sim, "./hf1.d15.v2.clones.csv", 0
 d13_clones, d13_clone_size = ct.clone_calling(d13_sim, "./hf1.d15.v13.clones.csv", 0.7)
 print(mef_clones.head())
 print(mef_clone_size.head())
+#      clone_id      cell_barcode
+#   0         1  CTAGCCTAGTGTCCAT
+#   1         1  AGCTTGAAGTACACCT
+#   2         1  CTGAAGTAGAGTTGGC
+#   3         1  CAGATCACAACTTGAC
+#   4         1  ATCCACCTCGAATGCT
+#   
+#      Clone_ID  Frequency
+#   0         2        228
+#   1         4        202
+#   2        16         65
+#   3        13         56
+#   4         8         53
 ```
-
-       clone_id      cell_barcode
-    0         1  CTAGCCTAGTGTCCAT
-    1         1  AGCTTGAAGTACACCT
-    2         1  CTGAAGTAGAGTTGGC
-    3         1  CAGATCACAACTTGAC
-    4         1  ATCCACCTCGAATGCT
-       Clone_ID  Frequency
-    0         2        228
-    1         4        202
-    2        16         65
-    3        13         56
-    4         8         53
-
 
 ### Lineage and Visualization
 
@@ -557,29 +541,23 @@ celltag_data
 ```python
 link_list = ct.convert_cell_tag_matrix_to_link_list(celltag_data)
 all_nodes = ct.get_nodes_from_link_list(link_list)
+#   Preprocessing data..
+#   Cells that have CellTagV1: 1402
+#   Cells that have CellTagV2: 1174
+#   Cells that have CellTagV3: 100
+#   find connection between [celltag -> cells]...
+#   find hidden links [CellTagV2 -> CellTagV3], or [CellTagV1 -> CellTagV3]...
+#   find hidden links [CellTagV1 -> CellTagV2]...
+#   finished
 ```
-
-    Preprocessing data..
-    Cells that have CellTagV1: 1402
-    Cells that have CellTagV2: 1174
-    Cells that have CellTagV3: 100
-    find connection between [celltag -> cells]...
-    find hidden links [CellTagV2 -> CellTagV3], or [CellTagV1 -> CellTagV3]...
-    find hidden links [CellTagV1 -> CellTagV2]...
-    finished
-
-
 
 ```python
 ref_nodes = ["CellTagV1_95"]
 sub_links, sub_nodes = ct.get_subnet(ref_nodes, link_list, all_nodes)
 print("Links:", sub_links.shape[0], "\nNodes:",sub_nodes.shape[0])
+#   Links: 25 
+#   Nodes: 15
 ```
-
-    Links: 25 
-    Nodes: 15
-
-
 
 ```python
 G = nx.Graph()
@@ -651,56 +629,14 @@ fig = go.Figure(data=[edge_trace, node_trace], layout=layout)
 iplot(fig)
 ```
 
-
-<div>                            <div id="c838f629-596e-40c7-8edd-24698cece92c" class="plotly-graph-div" style="height:600px; width:800px;"></div>            <script type="text/javascript">                require(["plotly"], function(Plotly) {                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("c838f629-596e-40c7-8edd-24698cece92c")) {                    Plotly.newPlot(                        "c838f629-596e-40c7-8edd-24698cece92c",                        [{"hoverinfo":"none","line":{"color":"#888","width":0.5},"mode":"lines","x":[0.09321163696583713,0.0926191676389283,null,0.2584437430596077,0.0926191676389283,null,-0.09318372261472853,0.0926191676389283,null,-0.1787929718453414,0.0926191676389283,null,0.45462745516849656,0.0926191676389283,null,0.3741666434966264,0.0926191676389283,null,0.423929772012322,0.0926191676389283,null,0.29429248396269336,0.0926191676389283,null,-0.007015646491360902,0.0926191676389283,null,0.1964132867843469,0.0926191676389283,null,0.01662451923388329,0.0926191676389283,null,-0.17287047362115618,0.0926191676389283,null,-0.646728773502388,-1.0,null,-0.646728773502388,-0.860780907271751,null,-0.646728773502388,-0.9611186291800916,null,-0.646728773502388,-0.7476951303143334,null,-0.646728773502388,-0.8207710975427938,null,-0.646728773502388,0.0926191676389283,null,-0.646728773502388,-0.9982347672912837,null,0.5644949379757486,0.480020988225612,null,0.5644949379757486,0.896570315384758,null,0.5644949379757486,0.6515249508887048,null,0.5644949379757486,0.8960244266707574,null,0.5644949379757486,0.7942277922069045,null,0.5644949379757486,0.0926191676389283,null],"y":[0.15065775649522983,-0.15672078388231322,null,-0.3495075967625502,-0.15672078388231322,null,0.08119076913388411,-0.15672078388231322,null,-0.1499880078133015,-0.15672078388231322,null,-0.2874049980761336,-0.15672078388231322,null,-0.4662213872212358,-0.15672078388231322,null,-0.11482433670348534,-0.15672078388231322,null,0.040965968446403926,-0.15672078388231322,null,-0.3934538385088683,-0.15672078388231322,null,-0.5434733105993319,-0.15672078388231322,null,-0.5537612702699515,-0.15672078388231322,null,-0.4038367396026915,-0.15672078388231322,null,-0.05702350750214658,0.09851604842706728,null,-0.05702350750214658,0.1543149627109535,null,-0.05702350750214658,-0.23250230389938603,null,-0.05702350750214658,0.2656552374383664,null,-0.05702350750214658,-0.3352148703337683,null,-0.05702350750214658,-0.15672078388231322,null,-0.05702350750214658,-0.0738506545698931,null,0.38601137101231014,0.6988853942271266,null,0.38601137101231014,0.5180025639893666,null,0.38601137101231014,0.7340167677203039,null,0.38601137101231014,0.33887246674759214,null,0.38601137101231014,0.650694299396453,null,0.38601137101231014,-0.15672078388231322,null],"type":"scatter"},{"marker":{"color":["red","red","red","red","red","red","red","red","red","red","red","red","blue","blue","blue"],"showscale":false,"size":10},"mode":"markers+text","text":["CCGTTCAGTTTGTTTC-1_V1","CTCCTAGTCATATCGG-1_V1","CGGACACCACCGAATT-1_V1","CTACACCGTAGGGACT-1_V1","CGTAGGCAGCGATAGC-1_V1","GAAACTCTCAATACCG-1_V1","GCATGATGTACCCAAT-1_V1","TTGCCGTAGTACACCT-1_V1","ATCGAGTTCCCTAATT-1_V1","CGACCTTTCTACCTGC-1_V1","TTGAACGCATCAGTAC-1_V1","TAGACCACAATGACCT-1_V1","CellTagV2_147","CellTagV2_109","CellTagV1_95"],"textposition":"bottom center","x":[0.09321163696583713,0.2584437430596077,-0.09318372261472853,-0.1787929718453414,0.45462745516849656,0.3741666434966264,0.423929772012322,0.29429248396269336,-0.007015646491360902,0.1964132867843469,0.01662451923388329,-0.17287047362115618,-0.646728773502388,0.5644949379757486,0.0926191676389283,-1.0,0.480020988225612,0.896570315384758,-0.860780907271751,0.6515249508887048,0.8960244266707574,0.7942277922069045,-0.9611186291800916,-0.7476951303143334,-0.8207710975427938,-0.9982347672912837],"y":[0.15065775649522983,-0.3495075967625502,0.08119076913388411,-0.1499880078133015,-0.2874049980761336,-0.4662213872212358,-0.11482433670348534,0.040965968446403926,-0.3934538385088683,-0.5434733105993319,-0.5537612702699515,-0.4038367396026915,-0.05702350750214658,0.38601137101231014,-0.15672078388231322,0.09851604842706728,0.6988853942271266,0.5180025639893666,0.1543149627109535,0.7340167677203039,0.33887246674759214,0.650694299396453,-0.23250230389938603,0.2656552374383664,-0.3352148703337683,-0.0738506545698931],"type":"scatter"}],                        {"height":600,"hovermode":"closest","showlegend":false,"template":{"data":{"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmapgl":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmapgl"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"#E5ECF6","showlakes":true,"showland":true,"subunitcolor":"white"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"bgcolor":"#E5ECF6","radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","gridwidth":2,"linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white"},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","gridwidth":2,"linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white"},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","gridwidth":2,"linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"bgcolor":"#E5ECF6","caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","zerolinewidth":2}}},"title":{"text":"Network"},"width":800},                        {"responsive": true}                    ).then(function(){
-
-var gd = document.getElementById('c838f629-596e-40c7-8edd-24698cece92c');
-var x = new MutationObserver(function (mutations, observer) {{
-        var display = window.getComputedStyle(gd).display;
-        if (!display || display === 'none') {{
-            console.log([gd, 'removed!']);
-            Plotly.purge(gd);
-            observer.disconnect();
-        }}
-}});
-
-// Listen for the removal of the full notebook cells
-var notebookContainer = gd.closest('#notebook-container');
-if (notebookContainer) {{
-    x.observe(notebookContainer, {childList: true});
-}}
-
-// Listen for the clearing of the current output cell
-var outputEl = gd.closest('.output');
-if (outputEl) {{
-    x.observe(outputEl, {childList: true});
-}}
-
-                        })                };                });            </script>        </div>
-
-
-
+        
 ```python
 celltag_data[celltag_data['CellTagV1']==95]
 ```
-
-
-
+![CellTagV1 Clone 95 Subnet Network](./scripts/clones.png)
 
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
